@@ -111,7 +111,7 @@ st.subheader("📲 Your Shareable QR Code")
 
 # -------- IMPORTANT --------
 # Replace this with your Streamlit Cloud URL once deployed:
-BASE_URL = "http://localhost:8501"
+BASE_URL = "safrent-global-s5q2bey6pnceo9t9vygnra.streamlit.app"
 # Example for deployment:
 # BASE_URL = "https://safrent-global.streamlit.app"
 
