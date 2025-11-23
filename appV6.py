@@ -20,7 +20,7 @@ REJECTED_FILE = "rejected.json"
 ACCEPTED_FILE = "accepted.json"  # <--- NEW FILE FOR SUCCESS NOTIFICATIONS
 
 # ⚠️ Update this URL to your actual Streamlit deployment URL
-BASE_URL = "https://safrent-global-ofimvwejhndxmemgwjjtfr.streamlit.app"
+BASE_URL = "https://safrent-global-dkueadyxfnu7zeyrqz9gqi.streamlit.app"
 
 # --- KEY SIMULATION (For Demo Purposes) ---
 DEMO_PRIVATE_KEY_HEX = "e6e3428b80980c65796695245862309101037380120197022205517112265087"
