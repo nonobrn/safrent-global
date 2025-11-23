@@ -160,9 +160,17 @@ class LedgerSystem:
         return True, "Block mined."
 
     def get_student_score(self, student_id):
+        # RELOAD from file to ensure we have the latest data
         self.chain = self.load_chain()
-        for block in reversed(self.chain): 
-            if block.get("student_id") == str(student_id):
+        
+        # 🛡️ ROBUST MATCHING: Strip whitespace and force string conversion
+        target_id = str(student_id).strip()
+        
+        for block in reversed(self.chain):
+            # Get ID from block, force to string, strip whitespace
+            block_id = str(block.get("student_id", "")).strip()
+            
+            if block_id == target_id:
                 return block
         return None
 
@@ -206,12 +214,13 @@ verify_id = query_params.get("verify_id", None)
 # 🛡️ VIEW 1: LANDLORD PORTAL (Public)
 # ==========================================
 if verify_id:
+    # Remove any accidental spaces from the URL parameter
     clean_verify_id = verify_id.strip()
     
     st.title("🛡️ Verification Portal")
     st.markdown("---")
     
-    # Check blockchain
+    # Attempt to find the record
     record = ledger_system.get_student_score(clean_verify_id)
     
     if record:
@@ -237,11 +246,27 @@ if verify_id:
             
     else:
         st.error(f"❌ Record not found for ID: {clean_verify_id}")
-        st.caption("Debug: If the student was just validated, try refreshing.")
+        
+        # --- 🔍 DEBUGGING TOOL (To understand why it fails) ---
+        with st.expander("🔍 Debugging Help (Why is this failing?)"):
+            st.write(f"👉 **We looked for:** '{clean_verify_id}'")
+            st.write("👉 **Currently inside ledger.json:**")
+            
+            # Show all IDs currently in database
+            all_ids = [str(b.get("student_id")).strip() for b in ledger_system.chain]
+            st.write(all_ids)
+            
+            if len(all_ids) == 0:
+                st.warning("⚠️ The ledger is empty! If you just validated, the file might not have saved correctly on the cloud.")
+            elif clean_verify_id in all_ids:
+                st.success("✅ The ID exists! Try refreshing the page.")
+            else:
+                st.error("❌ The ID is definitely missing from the file.")
+        # ------------------------------------------------------
     
     st.markdown("---")
     
-    # --- NEW: LANDLORD BUTTONS (REFRESH / HOME) ---
+    # --- LANDLORD BUTTONS ---
     col_act1, col_act2 = st.columns(2)
     with col_act1:
         if st.button("🔄 Refresh Data", use_container_width=True):
@@ -250,7 +275,6 @@ if verify_id:
         if st.button("🏠 Return to Home", use_container_width=True):
             st.query_params.clear()
             st.rerun()
-    # ---------------------------------------------
     
     st.stop() 
 
@@ -315,10 +339,9 @@ if st.session_state["current_view"] == "validator_dashboard":
 st.title("🌍 SafeRent Global")
 st.caption(f"Your Student ID: {st.session_state['student_id']}")
 
-# --- NEW: STUDENT REFRESH BUTTON ---
+# --- STUDENT REFRESH BUTTON ---
 if st.button("🔄 Refresh Status"):
     st.rerun()
-# -----------------------------------
 
 # --- CHECK FOR REJECTION NOTIFICATIONS ---
 rejection = DataManager.get_rejection(st.session_state['student_id'])
@@ -363,6 +386,7 @@ with tabs[0]:
         st.success("Request sent! Waiting for validator signature.")
 
 with tabs[1]:
+    # Force reload to check if validation just happened
     last_record = ledger_system.get_student_score(st.session_state['student_id'])
     
     if last_record:
