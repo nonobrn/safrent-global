@@ -1,60 +1,70 @@
-SafeRent Global – RentScore App
+# 🌍 SafeRent Global — Blockchain Rental Verification
 
-SafeRent Global is a Streamlit-based fintech application that allows students to generate a QR code of their RentScore, making it easy for landlords to verify their rental reliability. The app includes PDF and PNG export options, theming, and a minimal landing page for landlords.
+**SafeRent Global** is a decentralized application (dApp) prototype designed to help international students prove their reliability to landlords. It uses a **simulated blockchain ledger** and **cryptographic signatures** to certify a "RentScore," validated by a trusted institution (e.g., NEOMA BS).
 
-Features
+![Status](https://img.shields.io/badge/Status-Live-green) ![Tech](https://img.shields.io/badge/Built%20With-Streamlit-red)
 
-Generate a personalized RentScore card for students
+## 🚀 Overview
 
-QR code generation with SafeRent Global logo and themed design
+International students often lack a local guarantor or rental history. SafeRent Global solves this by:
+1.  **Calculating a RentScore** based on income, guarantor strength, and history.
+2.  **Validating** this data via a trusted Node (University/Validator).
+3.  **Storing** the validated score on an immutable JSON ledger (Blockchain logic).
+4.  **Sharing** the result via a tamper-proof QR Code and Digital Certificate.
 
-Timestamped ledger of RentScores (format: DDMMYYYY : HHMM)
+## 📦 Installation
 
-Download options for QR code and RentScore card (PNG & PDF)
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/your-username/saferent-global.git](https://github.com/your-username/saferent-global.git)
+    cd saferent-global
+    ```
 
-Minimal landing page for landlords
+2.  **Install dependencies:**
+    Ensure you have Python installed, then run:
+    ```bash
+    pip install streamlit qrcode[pil] ecdsa
+    ```
+    *Note: The `requirements.txt` file should contain: `streamlit`, `qrcode`, `pillow`, `ecdsa`.*
 
-Streamlit-based web interface
+3.  **Run the application:**
+    ```bash
+    streamlit run app.py
+    ```
 
-Installation
+## 🛠️ Usage Guide
 
-Clone the repository:
+### 1. 🎓 Student View (Default)
+* **Update Profile:** Adjust income, guarantor, and history sliders to calculate a projected score.
+* **Request Validation:** Click "Send for Validation" to submit your profile to the University Node.
+* **Notifications:** Receive real-time updates (Accepted/Rejected) upon refreshing.
+* **My QR Code:** Once validated, download your **Digital Certificate** (PDF/PNG) containing your cryptographic proof.
 
-git clone https://github.com/yourusername/safrent-global.git
-cd safrent-global
+### 2. 🔐 Validator View (University Staff)
+* **Access:** Open the Sidebar > "Staff / Validator Access".
+* **Password:** `nono401`
+* **Dashboard:** View pending student requests.
+* **Action:** * **✅ Accept:** Signs the data with a Private Key and mines a block to the ledger.
+    * **❌ Reject:** Sends a rejection notification to the student.
 
-Install dependencies:
+### 3. 🛡️ Landlord View (Verification)
+* **Scan:** Scan the student's QR code.
+* **Verify:** The app instantly retrieves the data from the blockchain.
+* **Analysis:** View a colored risk assessment (Excellent/Average/Risky) and verify the cryptographic signature.
 
-pip install -r requirements.txt
+## 📂 Project Structure
 
-Run the app locally:
+* `app.py`: Main application code (Streamlit interface + Blockchain logic).
+* `ledger.json`: The immutable ledger storing validated blocks.
+* `pending.json`: Temporary storage for requests awaiting validation.
+* `accepted.json` / `rejected.json`: Notification system files.
+* `requirements.txt`: List of Python libraries required.
 
-streamlit run app.py
+## 🔐 Security Features
 
-Access the app in your browser at http://localhost:8501
+* **ECDSA Signatures:** Every validated block is cryptographically signed by the Validator's private key.
+* **Hash Chaining:** Each block contains the hash of the previous block, preventing ledger tampering.
+* **Identity Protection:** Landlords look up data via Student ID, preventing URL spoofing.
 
-File Reference
-
-Screenshot of the app: IMG_6109.PNG
-
-Usage
-
-Enter student information to generate a RentScore
-
-View and download the QR code or PDF card
-
-Show the QR code to landlords for quick verification
-
-Streamlit Cloud Deployment
-
-You can deploy the app to Streamlit Cloud for easy sharing:
-
-Push your updated code to GitHub
-
-Log in to Streamlit Cloud
-
-Connect your repository and deploy
-
-License
-
-MIT License
+---
+*Created for the SafeRent Global Project.*
