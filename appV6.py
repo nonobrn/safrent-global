@@ -17,9 +17,10 @@ st.set_page_config(page_title="SafeRent Global", page_icon="🌍", layout="cente
 LEDGER_FILE = "ledger.json"
 PENDING_FILE = "pending.json"
 REJECTED_FILE = "rejected.json"
+ACCEPTED_FILE = "accepted.json"  # <--- NEW FILE FOR SUCCESS NOTIFICATIONS
 
 # ⚠️ Update this URL to your actual Streamlit deployment URL
-BASE_URL = "https://safrent-global-dkueadyxfnu7zeyrqz9gqi.streamlit.app"
+BASE_URL = "https://safrent-global-ofimvwejhndxmemgwjjtfr.streamlit.app"
 
 # --- KEY SIMULATION (For Demo Purposes) ---
 DEMO_PRIVATE_KEY_HEX = "e6e3428b80980c65796695245862309101037380120197022205517112265087"
@@ -71,6 +72,7 @@ class DataManager:
         new_data = [req for req in data if req.get("timestamp") != request_timestamp]
         DataManager.save_json(PENDING_FILE, new_data)
 
+    # --- REJECTION LOGIC ---
     @staticmethod
     def add_rejection(student_id, reason):
         data = DataManager.load_json(REJECTED_FILE)
@@ -94,6 +96,30 @@ class DataManager:
         data = DataManager.load_json(REJECTED_FILE)
         new_data = [item for item in data if item["student_id"] != student_id]
         DataManager.save_json(REJECTED_FILE, new_data)
+
+    # --- ACCEPTANCE LOGIC (NEW) ---
+    @staticmethod
+    def add_acceptance(student_id):
+        data = DataManager.load_json(ACCEPTED_FILE)
+        data.append({
+            "student_id": student_id,
+            "timestamp": time.time()
+        })
+        DataManager.save_json(ACCEPTED_FILE, data)
+
+    @staticmethod
+    def get_acceptance(student_id):
+        data = DataManager.load_json(ACCEPTED_FILE)
+        for item in reversed(data):
+            if item["student_id"] == student_id:
+                return item
+        return None
+
+    @staticmethod
+    def clear_acceptance(student_id):
+        data = DataManager.load_json(ACCEPTED_FILE)
+        new_data = [item for item in data if item["student_id"] != student_id]
+        DataManager.save_json(ACCEPTED_FILE, new_data)
 
 
 # ==========================================
@@ -247,7 +273,7 @@ if verify_id:
     else:
         st.error(f"❌ Record not found for ID: {clean_verify_id}")
         
-        # --- 🔍 DEBUGGING TOOL (To understand why it fails) ---
+        # --- 🔍 DEBUGGING TOOL ---
         with st.expander("🔍 Debugging Help (Why is this failing?)"):
             st.write(f"👉 **We looked for:** '{clean_verify_id}'")
             st.write("👉 **Currently inside ledger.json:**")
@@ -316,6 +342,7 @@ if st.session_state["current_view"] == "validator_dashboard":
                     
                     if success:
                         DataManager.remove_pending_request(req['timestamp'])
+                        DataManager.add_acceptance(req['student_id']) # <--- NOTIFY STUDENT
                         st.success("Validated!")
                         time.sleep(1)
                         st.rerun()
@@ -343,7 +370,16 @@ st.caption(f"Your Student ID: {st.session_state['student_id']}")
 if st.button("🔄 Refresh Status"):
     st.rerun()
 
-# --- CHECK FOR REJECTION NOTIFICATIONS ---
+# --- CHECK FOR NOTIFICATIONS (SUCCESS & REJECTION) ---
+# 1. Acceptance
+acceptance = DataManager.get_acceptance(st.session_state['student_id'])
+if acceptance:
+    st.success("🎉 Great news! Your request has been successfully validated by NEOMA BS.")
+    if st.button("Dismiss Success Message"):
+        DataManager.clear_acceptance(st.session_state['student_id'])
+        st.rerun()
+
+# 2. Rejection
 rejection = DataManager.get_rejection(st.session_state['student_id'])
 if rejection:
     st.error(f"❌ Your last request was rejected: {rejection['reason']}")
