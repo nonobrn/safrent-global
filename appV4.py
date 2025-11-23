@@ -85,4 +85,9 @@ class LedgerSystem:
         return block
 
     def get_student_score(self, student_id):
-        for block in reversed(self.chain):
+        """Retrieves the latest valid entry for a given student ID."""
+        # Iterate backwards to find the most recent
+        for block in reversed(self.chain): # <--- Vérifie bien cette ligne
+            if block.get("student_id") == student_id:
+                return block
+        return None
