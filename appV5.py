@@ -228,7 +228,7 @@ tabs = st.tabs(["📝 Request Validation", "📊 My QR Code", "⛓️ Ledger Exp
 
 with tabs[0]:
     st.header("Update Profile")
-    st.info("ℹ️ Updates must be validated by a trusted Node (NEOMA BS) before appearing on the blockchain.")
+    st.info("ℹ️ Updates must be validated by a trusted Node before appearing on the blockchain.")
     
     col1, col2, col3 = st.columns(3)
     income = col1.slider("Income", 0, 100, 50)
