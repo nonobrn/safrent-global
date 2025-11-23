@@ -42,7 +42,7 @@ International students often lack a local guarantor or rental history. SafeRent 
 
 ### 2. 🔐 Validator View (University Staff)
 * **Access:** Open the Sidebar > "Staff / Validator Access".
-* **Password:** `nono401`
+* **Password:** `admin`
 * **Dashboard:** View pending student requests.
 * **Action:** * **✅ Accept:** Signs the data with a Private Key and mines a block to the ledger.
     * **❌ Reject:** Sends a rejection notification to the student.
