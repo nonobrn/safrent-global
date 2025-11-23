@@ -5,6 +5,7 @@ import time
 import qrcode
 from io import BytesIO
 from PIL import Image, ImageDraw
+from datetime import datetime
 
 LEDGER_FILE = "ledger.json"
 
@@ -19,11 +20,13 @@ def load_ledger():
 def save_ledger(data):
     with open(LEDGER_FILE, "w") as f:
         json.dump(data, f, indent=4)
+now = datetime.now()
+formatted_timestamp = now.strftime("%d%m%Y : %H%M")  # DDMMAAA : HHMM
 
 def add_entry(entry_type, details):
     ledger = load_ledger()
     entry = {
-        "timestamp": time.strftime("%d/%m/%Y - %H:%M"),
+        "timestamp": formatted_timestamp,
         "type": entry_type,
         "details": details,
         "hash": hashlib.sha256(details.encode()).hexdigest()
