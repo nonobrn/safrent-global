@@ -14,7 +14,7 @@ from datetime import datetime
 st.set_page_config(page_title="SafeRent Global", page_icon="🌍", layout="centered")
 LEDGER_FILE = "ledger.json"
 # Replace with your actual deployed URL
-BASE_URL = "https://safrent-global.streamlit.app" 
+BASE_URL = "https://safrent-global-4g2jksdrmvree6ppabxp7z.streamlit.app" 
 
 # ==========================================
 # 🔐 BLOCKCHAIN LOGIC
