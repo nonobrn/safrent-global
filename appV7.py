@@ -422,7 +422,7 @@ if rejection:
 st.sidebar.header("Staff / Validator Access")
 password = st.sidebar.text_input("Access Key", type="password")
 if st.sidebar.button("Login"):
-    if password == "nono401":
+    if password == "admin":
         st.session_state["current_view"] = "validator_dashboard"
         st.rerun()
     else:
