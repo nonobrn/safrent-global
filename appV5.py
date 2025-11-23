@@ -19,7 +19,7 @@ BASE_URL = "https://safrent-global.streamlit.app"
 # --- SIMULATION DES CLÉS (Pour la démo) ---
 # Dans la réalité, la Private Key est secrète et stockée uniquement chez le validateur.
 # Ici, on génère une paire fixe pour que la démo fonctionne tout de suite.
-DEMO_PRIVATE_KEY_HEX = "e6e3428b80980c65796695245862309101037380120197022205517112265087"
+DEMO_PRIVATE_KEY_HEX = "a3ac02671b6ae489f134039c5f5ba2e0107ef18b9740f1bbd0394028ef4994e2"
 try:
     VALIDATOR_SK = SigningKey.from_string(bytes.fromhex(DEMO_PRIVATE_KEY_HEX), curve=SECP256k1)
     VALIDATOR_VK = VALIDATOR_SK.verifying_key
@@ -29,7 +29,7 @@ except:
     VALIDATOR_PUB_KEY_HEX = "demo-key"
 
 TRUSTED_VALIDATORS = {
-    "University of Reims": VALIDATOR_PUB_KEY_HEX
+    "NEOMA BS": VALIDATOR_PUB_KEY_HEX
 }
 
 # ==========================================
