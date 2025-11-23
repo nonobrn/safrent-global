@@ -160,8 +160,8 @@ is_validator = st.sidebar.checkbox("I am a Validator")
 
 if is_validator:
     password = st.sidebar.text_input("Node Key / Password", type="password")
-    if password == "admin": # Simple password for demo
-        st.sidebar.success("Node: University of Reims (Connected)")
+    if password == "admin": azerty # Simple password for demo
+        st.sidebar.success("Node: NEOMA BS (Connected)")
         
         st.sidebar.markdown("---")
         st.sidebar.subheader("📋 Pending Approvals")
