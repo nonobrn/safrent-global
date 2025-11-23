@@ -4,6 +4,7 @@ import hashlib
 import time
 import qrcode
 from io import BytesIO
+from PIL import Image, ImageDraw
 
 LEDGER_FILE = "ledger.json"
 
@@ -22,7 +23,7 @@ def save_ledger(data):
 def add_entry(entry_type, details):
     ledger = load_ledger()
     entry = {
-        "timestamp": time.time(),
+        "timestamp": time.strftime("%d/%m/%Y - %H:%M"),
         "type": entry_type,
         "details": details,
         "hash": hashlib.sha256(details.encode()).hexdigest()
@@ -42,12 +43,33 @@ def calculate_rent_score(income, guarantor, history):
 
 # ---------- QR generator ----------
 def generate_qr(data):
-    qr = qrcode.QRCode(box_size=3, border=2)
+    # Create basic QR
+    qr = qrcode.QRCode(box_size=8, border=4)
     qr.add_data(data)
     qr.make(fit=True)
-    img = qr.make_image()
+    img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+
+    # Add a colored border around the QR
+    border_color = (66, 135, 245)  # Light blue SafeRent theme
+    bordered = Image.new("RGB", (img.size[0] + 40, img.size[1] + 40), border_color)
+    bordered.paste(img, (20, 20))
+
+    # Add a small circle "logo" in the center
+    logo_size = 70
+    logo = Image.new("RGB", (logo_size, logo_size), (255, 255, 255))
+    draw = ImageDraw.Draw(logo)
+    draw.ellipse((0, 0, logo_size, logo_size), fill="white", outline=border_color, width=4)
+
+    # Add text inside the circle
+    draw.text((logo_size//2 - 20, logo_size//2 - 10), "SG", fill=border_color)
+
+    # Paste logo onto QR
+    pos = ((bordered.size[0] - logo_size) // 2, (bordered.size[1] - logo_size) // 2)
+    bordered.paste(logo, pos)
+
+    # Convert to bytes
     buffer = BytesIO()
-    img.save(buffer, format="PNG")
+    bordered.save(buffer, format="PNG")
     return buffer.getvalue()
 
 # ---------- Streamlit starts ----------
@@ -118,7 +140,7 @@ BASE_URL = "https://safrent-global-s5q2bey6pnceo9t9vygnra.streamlit.app"
 qr_url = f"{BASE_URL}/?score={score}"
 qr_image = generate_qr(qr_url)
 
-st.image(qr_image, caption="Scan to verify your RentScore")
+st.image(qr_image, caption="Your QR code is ready — show it to the landlord!")
 st.write("Link encoded in QR:", qr_url)
 
 st.download_button("Download QR Code", qr_image, "safrent_qr.png")
