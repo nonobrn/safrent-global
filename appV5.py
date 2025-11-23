@@ -178,7 +178,7 @@ if is_validator:
                 signature = VALIDATOR_SK.sign(msg.encode()).hex()
                 
                 # 2. Envoi au Ledger
-                success, msg = ledger_system.add_signed_block(req, signature, "University of Reims")
+                success, msg = ledger_system.add_signed_block(req, signature, "NEOMA BS")
                 
                 if success:
                     st.session_state["pending_requests"].pop(0)
@@ -228,7 +228,7 @@ tabs = st.tabs(["📝 Request Validation", "📊 My QR Code", "⛓️ Ledger Exp
 
 with tabs[0]:
     st.header("Update Profile")
-    st.info("ℹ️ Updates must be validated by a trusted Node (University) before appearing on the blockchain.")
+    st.info("ℹ️ Updates must be validated by a trusted Node (NEOMA BS) before appearing on the blockchain.")
     
     col1, col2, col3 = st.columns(3)
     income = col1.slider("Income", 0, 100, 50)
