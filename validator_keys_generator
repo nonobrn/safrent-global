@@ -1,0 +1,5 @@
+from ecdsa import SigningKey, SECP256k1
+sk = SigningKey.generate(curve=SECP256k1)
+vk = sk.verifying_key
+print("PRIVATE_KEY:", sk.to_string().hex()) # À GARDER SECRET (Pour le validateur)
+print("PUBLIC_KEY:", vk.to_string().hex())  # À METTRE DANS LE CODE (Pour tout le monde)
