@@ -4,6 +4,7 @@ import hashlib
 import time
 import qrcode
 import uuid
+import os
 from io import BytesIO
 from PIL import Image, ImageDraw
 from datetime import datetime
@@ -14,6 +15,9 @@ from ecdsa import SigningKey, VerifyingKey, SECP256k1
 # ==========================================
 st.set_page_config(page_title="SafeRent Global", page_icon="🌍", layout="centered")
 LEDGER_FILE = "ledger.json"
+PENDING_FILE = "pending.json"
+REJECTED_FILE = "rejected.json"
+
 # ⚠️ Update this URL to your actual Streamlit deployment URL
 BASE_URL = "https://safrent-global-ofimvwejhndxmemgwjjtfr.streamlit.app"
 
@@ -31,6 +35,71 @@ TRUSTED_VALIDATORS = {
 }
 
 # ==========================================
+# 📂 PERSISTENCE MANAGER (HANDLES FILES)
+# ==========================================
+class DataManager:
+    """Handles reading/writing JSON files to allow communication between users."""
+    
+    @staticmethod
+    def load_json(filename):
+        if not os.path.exists(filename):
+            return []
+        try:
+            with open(filename, "r") as f:
+                return json.load(f)
+        except:
+            return []
+
+    @staticmethod
+    def save_json(filename, data):
+        with open(filename, "w") as f:
+            json.dump(data, f, indent=4)
+
+    @staticmethod
+    def add_pending_request(request):
+        data = DataManager.load_json(PENDING_FILE)
+        data.append(request)
+        DataManager.save_json(PENDING_FILE, data)
+
+    @staticmethod
+    def get_pending_requests():
+        return DataManager.load_json(PENDING_FILE)
+
+    @staticmethod
+    def remove_pending_request(request_timestamp):
+        data = DataManager.load_json(PENDING_FILE)
+        # Filter out the request with the matching timestamp
+        new_data = [req for req in data if req.get("timestamp") != request_timestamp]
+        DataManager.save_json(PENDING_FILE, new_data)
+
+    @staticmethod
+    def add_rejection(student_id, reason):
+        data = DataManager.load_json(REJECTED_FILE)
+        data.append({
+            "student_id": student_id,
+            "reason": reason,
+            "timestamp": time.time()
+        })
+        DataManager.save_json(REJECTED_FILE, data)
+
+    @staticmethod
+    def get_rejection(student_id):
+        data = DataManager.load_json(REJECTED_FILE)
+        # Return the most recent rejection for this student
+        for item in reversed(data):
+            if item["student_id"] == student_id:
+                return item
+        return None
+
+    @staticmethod
+    def clear_rejection(student_id):
+        # Clears rejection after the student sees it
+        data = DataManager.load_json(REJECTED_FILE)
+        new_data = [item for item in data if item["student_id"] != student_id]
+        DataManager.save_json(REJECTED_FILE, new_data)
+
+
+# ==========================================
 # 🔐 BLOCKCHAIN LOGIC
 # ==========================================
 class LedgerSystem:
@@ -39,15 +108,10 @@ class LedgerSystem:
         self.chain = self.load_chain()
 
     def load_chain(self):
-        try:
-            with open(self.filename, "r") as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            return []
+        return DataManager.load_json(self.filename)
 
     def save_chain(self):
-        with open(self.filename, "w") as f:
-            json.dump(self.chain, f, indent=4)
+        DataManager.save_json(self.filename, self.chain)
 
     def get_last_block(self):
         return self.chain[-1] if self.chain else None
@@ -60,6 +124,9 @@ class LedgerSystem:
             return False
 
     def add_signed_block(self, request_data, signature, validator_name):
+        # RELOAD CHAIN just in case another user updated it recently
+        self.chain = self.load_chain()
+        
         previous_block = self.get_last_block()
         prev_hash = previous_block.get("hash", "0") if previous_block else "0"
         
@@ -97,18 +164,14 @@ class LedgerSystem:
         return True, "Block mined."
 
     def get_student_score(self, student_id):
+        # CRITICAL FIX: Reload the chain from the file every time we check.
+        # This ensures the Landlord sees the update made by the Validator instantly.
+        self.chain = self.load_chain()
+        
         for block in reversed(self.chain): 
-            if block.get("student_id") == student_id:
+            if block.get("student_id") == str(student_id): # Ensure string comparison
                 return block
         return None
-
-    def verify_chain_integrity(self):
-        for i in range(1, len(self.chain)):
-            current = self.chain[i]
-            previous = self.chain[i-1]
-            if current.get("previous_hash") != previous.get("hash"):
-                return False
-        return True
 
 ledger_system = LedgerSystem()
 
@@ -137,9 +200,6 @@ def generate_custom_qr(link):
 if "student_id" not in st.session_state:
     st.session_state["student_id"] = str(uuid.uuid4())[:8]
 
-if "pending_requests" not in st.session_state:
-    st.session_state["pending_requests"] = []
-
 # Navigation state: 'home', 'validator_dashboard'
 if "current_view" not in st.session_state:
     st.session_state["current_view"] = "home"
@@ -151,10 +211,14 @@ verify_id = query_params.get("verify_id", None)
 # 🛡️ VIEW 1: LANDLORD PORTAL (Public)
 # ==========================================
 if verify_id:
+    # CLEAN THE ID (Remove spaces or potential URL glitches)
+    clean_verify_id = verify_id.strip()
+    
     st.title("🛡️ Verification Portal")
     st.markdown("---")
     
-    record = ledger_system.get_student_score(verify_id)
+    # 🔎 FORCE RELOAD and CHECK
+    record = ledger_system.get_student_score(clean_verify_id)
     
     if record:
         score = record.get('score', 0)
@@ -172,13 +236,14 @@ if verify_id:
         with col1:
              st.metric("Certified RentScore", f"{score}/100")
         with col2:
-            st.info(f"👤 Student ID: **{verify_id}**\n\n🏫 Verified by: **{record.get('validator', 'Unknown')}**")
+            st.info(f"👤 Student ID: **{clean_verify_id}**\n\n🏫 Verified by: **{record.get('validator', 'Unknown')}**")
         
         with st.expander("View Cryptographic Proof"):
             st.code(f"Signature: {record.get('signature')}\nHash: {record.get('hash')}")
             
     else:
-        st.error("❌ This record was not found in the Blockchain.")
+        st.error(f"❌ Record not found for ID: {clean_verify_id}")
+        st.caption("Debug: If the student just got validated, try refreshing this page.")
     
     if st.button("🏠 Return to Home"):
         st.query_params.clear()
@@ -205,30 +270,39 @@ if st.session_state["current_view"] == "validator_dashboard":
     st.markdown("---")
     st.subheader("📋 Pending Requests")
     
-    if len(st.session_state["pending_requests"]) > 0:
-        # Display requests as cards
-        for i, req in enumerate(st.session_state["pending_requests"]):
+    pending_list = DataManager.get_pending_requests()
+
+    if len(pending_list) > 0:
+        for req in pending_list:
             with st.container(border=True):
                 c1, c2, c3 = st.columns([2, 1, 1])
                 c1.markdown(f"**Student:** `{req['student_id']}`")
                 c1.text(f"Details: {req['details']}")
                 c2.metric("Score", req['score'])
                 
-                if c3.button("✅ Sign & Validate", key=f"btn_{i}"):
-                    # Signature
+                # Validation / Rejection Buttons
+                col_accept, col_reject = c3.columns(2)
+                
+                if col_accept.button("✅ Accept", key=f"acc_{req['timestamp']}"):
                     msg = f"{req['student_id']}{req['details']}{req['score']}"
                     signature = VALIDATOR_SK.sign(msg.encode()).hex()
                     
-                    # Send to Blockchain
                     success, msg = ledger_system.add_signed_block(req, signature, "NEOMA BS")
                     
                     if success:
-                        st.session_state["pending_requests"].pop(i)
-                        st.success("Block validated and added to the blockchain!")
+                        DataManager.remove_pending_request(req['timestamp'])
+                        st.success("Block validated and added to blockchain!")
                         time.sleep(1)
                         st.rerun()
                     else:
                         st.error(f"Error: {msg}")
+
+                if col_reject.button("❌ Reject", key=f"rej_{req['timestamp']}"):
+                    DataManager.remove_pending_request(req['timestamp'])
+                    DataManager.add_rejection(req['student_id'], "Data inconsistency detected by admin.")
+                    st.warning("Request rejected. Notification sent to student.")
+                    time.sleep(1)
+                    st.rerun()
     else:
         st.info("No pending requests at the moment.")
         
@@ -239,6 +313,15 @@ if st.session_state["current_view"] == "validator_dashboard":
 # ==========================================
 st.title("🌍 SafeRent Global")
 st.caption(f"Your Student ID: {st.session_state['student_id']}")
+
+# --- CHECK FOR REJECTION NOTIFICATIONS ---
+rejection = DataManager.get_rejection(st.session_state['student_id'])
+if rejection:
+    st.error(f"❌ Your last request was rejected: {rejection['reason']}")
+    if st.button("Dismiss Notification"):
+        DataManager.clear_rejection(st.session_state['student_id'])
+        st.rerun()
+# -----------------------------------------
 
 # --- Sidebar Login to switch to Validator Mode ---
 st.sidebar.header("Staff / Validator Access")
@@ -272,16 +355,21 @@ with tabs[0]:
             "score": current_score,
             "timestamp": time.time()
         }
-        st.session_state["pending_requests"].append(req)
+        DataManager.add_pending_request(req)
         st.success("Request sent! Waiting for validator signature.")
 
 with tabs[1]:
+    # Force reload to check if validation just happened
     last_record = ledger_system.get_student_score(st.session_state['student_id'])
+    
     if last_record:
         url = f"{BASE_URL}/?verify_id={st.session_state['student_id']}"
         st.image(generate_custom_qr(url), width=200)
         st.success("Your profile is certified and active.")
         st.write("Show this QR code to your future landlord.")
+        
+        with st.expander("Show Details"):
+             st.json(last_record)
     else:
         st.warning("No certified score yet. Please submit a request in the first tab.")
 
