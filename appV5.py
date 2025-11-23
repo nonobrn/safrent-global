@@ -162,7 +162,7 @@ if is_validator:
     password = st.sidebar.text_input("Node Key / Password", type="password")
     
     # ⚠️ ATTENTION AUX ESPACES ICI (4 espaces après le 'if', 8 espaces après le 2ème 'if')
-    if password == "admin": 
+    if password == "nono401": 
         st.sidebar.success("Node: NEOMA BS (Connected)")
         
         st.sidebar.markdown("---")
