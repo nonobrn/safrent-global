@@ -160,18 +160,20 @@ is_validator = st.sidebar.checkbox("I am a Validator")
 
 if is_validator:
     password = st.sidebar.text_input("Node Key / Password", type="password")
-    if password == "admin": azerty # Simple password for demo
+    
+    # ⚠️ ATTENTION AUX ESPACES ICI (4 espaces après le 'if', 8 espaces après le 2ème 'if')
+    if password == "admin": 
         st.sidebar.success("Node: NEOMA BS (Connected)")
         
         st.sidebar.markdown("---")
         st.sidebar.subheader("📋 Pending Approvals")
         
         if len(st.session_state["pending_requests"]) > 0:
-            req = st.session_state["pending_requests"][0] # Take first request
+            req = st.session_state["pending_requests"][0] # Prend la première demande
             st.sidebar.info(f"Student: {req['student_id']}\nScore: {req['score']}")
             
             if st.sidebar.button("✅ Sign & Approve"):
-                # 1. Le Node signe cryptographiquement les données
+                # 1. Signature cryptographique
                 msg = f"{req['student_id']}{req['details']}{req['score']}"
                 signature = VALIDATOR_SK.sign(msg.encode()).hex()
                 
