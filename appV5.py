@@ -14,7 +14,7 @@ from ecdsa import SigningKey, VerifyingKey, SECP256k1
 # ==========================================
 st.set_page_config(page_title="SafeRent Global", page_icon="🌍", layout="centered")
 LEDGER_FILE = "ledger.json"
-BASE_URL = "https://safrent-global.streamlit.app" 
+BASE_URL = "https://safrent-global-ofimvwejhndxmemgwjjtfr.streamlit.app" 
 
 # --- SIMULATION DES CLÉS (Pour la démo) ---
 # Dans la réalité, la Private Key est secrète et stockée uniquement chez le validateur.
