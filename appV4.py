@@ -85,4 +85,4 @@ class LedgerSystem:
         return block
 
     def get_student_score(self, student_id):
-        for block in reversed(
+        for block in reversed(self.chain):
