@@ -11,19 +11,16 @@ from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 from ecdsa import SigningKey, VerifyingKey, SECP256k1
 
-# ==========================================
-# ⚙️ CONFIGURATION & CONSTANTS
-# ==========================================
 st.set_page_config(page_title="SafeRent Global", page_icon="🌍", layout="centered")
 LEDGER_FILE = "ledger.json"
 PENDING_FILE = "pending.json"
 REJECTED_FILE = "rejected.json"
 ACCEPTED_FILE = "accepted.json"
 
-# ⚠️ Update this URL to your actual Streamlit deployment URL
+
 BASE_URL = "https://safrent-global-4o6mscpnwgpvpgvxucynne.streamlit.app"
 
-# --- KEY SIMULATION (For Demo Purposes) ---
+
 DEMO_PRIVATE_KEY_HEX = "e6e3428b80980c65796695245862309101037380120197022205517112265087"
 try:
     VALIDATOR_SK = SigningKey.from_string(bytes.fromhex(DEMO_PRIVATE_KEY_HEX), curve=SECP256k1)
@@ -36,9 +33,7 @@ TRUSTED_VALIDATORS = {
     "NEOMA BS": VALIDATOR_PUB_KEY_HEX
 }
 
-# ==========================================
-# 📂 PERSISTENCE MANAGER (HANDLES FILES)
-# ==========================================
+
 class DataManager:
     """Handles reading/writing JSON files to allow communication between users."""
     
@@ -123,9 +118,7 @@ class DataManager:
         DataManager.save_json(ACCEPTED_FILE, new_data)
 
 
-# ==========================================
-# 🔐 BLOCKCHAIN LOGIC
-# ==========================================
+
 class LedgerSystem:
     def __init__(self):
         self.filename = LEDGER_FILE
@@ -197,9 +190,7 @@ class LedgerSystem:
 
 ledger_system = LedgerSystem()
 
-# ==========================================
-# 🧮 HELPERS
-# ==========================================
+
 def calculate_rent_score(income, guarantor, history):
     return min(int(income * 0.4 + guarantor * 0.3 + history * 0.2 + 10), 100)
 
@@ -263,9 +254,7 @@ def create_digital_certificate(qr_bytes, student_id, block_hash, signature):
 
     return cert
 
-# ==========================================
-# 🚦 STATE & ROUTING
-# ==========================================
+
 if "student_id" not in st.session_state:
     st.session_state["student_id"] = str(uuid.uuid4())[:8]
 
@@ -278,9 +267,7 @@ if "current_view" not in st.session_state:
 query_params = st.query_params
 verify_id = query_params.get("verify_id", None)
 
-# ==========================================
-# 🛡️ VIEW 1: LANDLORD PORTAL (Public)
-# ==========================================
+
 if verify_id:
     clean_verify_id = verify_id.strip()
     
@@ -338,9 +325,7 @@ if verify_id:
     
     st.stop() 
 
-# ==========================================
-# 🔐 VIEW 2: VALIDATOR DASHBOARD (Restricted)
-# ==========================================
+
 if st.session_state["current_view"] == "validator_dashboard":
     st.title("🔐 Validator Dashboard (NEOMA BS)")
     
@@ -394,9 +379,7 @@ if st.session_state["current_view"] == "validator_dashboard":
         
     st.stop() 
 
-# ==========================================
-# 🎓 VIEW 3: STUDENT HOME (Default)
-# ==========================================
+
 st.title("🌍 SafeRent Global")
 st.caption(f"Your Student ID: {st.session_state['student_id']}")
 
